@@ -1,6 +1,6 @@
-﻿module.exports = {
-  "name": "childTemplates",
-  "main": "lib/childTemplates.js",
-  "dependencies": [ "templates" ],
-  "hasPublicPart": false
+module.exports = {
+  'name': 'childTemplates',
+  'main': 'lib/childTemplates.js',
+  'dependencies': ['templates'],
+  'hasPublicPart': false
 }
