@@ -1,5 +1,5 @@
 {
-  "name": "jsreport-childTemplates",
+  "name": "jsreport-child-templates",
   "version": "0.0.1",
   "description": "jsreport extension adding support to combine one template from multiple sub templates",
   "scripts": {
