@@ -103,4 +103,81 @@ describe('childTemplates', function () {
       done()
     })
   })
+
+  it('should be able to pass data params to child', function (done) {
+    reporter.documentStore.collection('templates').insert({
+      content: '{{:foo}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @data.foo=xx}'},
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('xx')
+        done()
+      })
+    }).catch(done)
+  })
+
+  it('should be able to pass data nested params to child', function (done) {
+    reporter.documentStore.collection('templates').insert({
+      content: '{{:foo.a}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @data.foo.a=xx}'},
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('xx')
+        done()
+      })
+    }).catch(done)
+  })
+
+  it('should merge in params, not override', function (done) {
+    reporter.documentStore.collection('templates').insert({
+      content: '{{:main}}{{:foo}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @data.foo=xx}'},
+        data: { main: 'main' },
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('mainxx')
+        done()
+      })
+    }).catch(done)
+  })
+
+  it('should be able to override template properties with params', function (done) {
+    reporter.documentStore.collection('templates').insert({
+      content: 'aaa',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @template.content=xx}'},
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('xx')
+        done()
+      })
+    }).catch(done)
+  })
 })
