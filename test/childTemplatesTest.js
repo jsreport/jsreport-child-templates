@@ -142,6 +142,27 @@ describe('childTemplates', function () {
     }).catch(done)
   })
 
+  it.skip('should be able to pass stringified object as params', function (done) {
+    reporter.documentStore.collection('templates').insert({
+      content: '{{:foo.a}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {
+          content: '{#child t1 @data={foo: {"a": "hello"}}}'
+        },
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('hello')
+        done()
+      })
+    }).catch(done)
+  })
+
   it('should merge in params, not override', function (done) {
     reporter.documentStore.collection('templates').insert({
       content: '{{:main}}{{:foo}}',
