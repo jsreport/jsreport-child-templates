@@ -201,4 +201,23 @@ describe('childTemplates', function () {
       })
     }).catch(done)
   })
+
+  it('should clone input data passed to child request', function () {
+    return reporter.documentStore.collection('templates').insert({
+      content: '{{:a}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @data.a=1}{#child t1 @data.a=2}'},
+        data: {},
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('12')
+      })
+    })
+  })
 })
