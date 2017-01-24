@@ -12,7 +12,11 @@
     "url": "git@github.com:jsreport/jsreport-child-templates.git"
   },
   "standard": {
-    "globals": ["describe", "it", "beforeEach"]
+    "globals": [
+      "describe",
+      "it",
+      "beforeEach"
+    ]
   },
   "keywords": [
     "jsreport",
@@ -21,8 +25,8 @@
   "license": "LGPL",
   "dependencies": {
     "async-replace": "1.0.0",
-    "node.extend": "1.1.5",
-    "q": "1.4.1"
+    "bluebird": "3.4.7",
+    "node.extend": "1.1.5"
   },
   "author": "Jan Blaha",
   "devDependencies": {

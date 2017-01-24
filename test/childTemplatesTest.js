@@ -5,18 +5,16 @@ var Reporter = require('jsreport-core').Reporter
 describe('childTemplates', function () {
   var reporter
 
-  beforeEach(function (done) {
+  beforeEach(function () {
     reporter = new Reporter({
       rootDirectory: path.join(__dirname, '../')
     })
 
-    reporter.init().then(function () {
-      done()
-    }).fail(done)
+    return reporter.init()
   })
 
-  it('should replace child template mark with its content', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should replace child template mark with its content', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: 'xx',
       engine: 'jsrender',
       recipe: 'html',
@@ -29,13 +27,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('xx')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it('should handle multiple templates in one', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should handle multiple templates in one', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{>~a()}}',
       engine: 'jsrender',
       helpers: 'function a() { return \'foo\'; }',
@@ -49,13 +46,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('afoobafoo')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it('should handle multiple templates in nested one', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should handle multiple templates in nested one', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{>~a()}}',
       engine: 'jsrender',
       helpers: 'function a() { return \'foo\'; }',
@@ -75,10 +71,9 @@ describe('childTemplates', function () {
 
         return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
           request.template.content.should.be.eql('foofoo')
-          done()
         })
       })
-    }).catch(done)
+    })
   })
 
   it('should throw when there is circle in templates', function (done) {
@@ -104,8 +99,8 @@ describe('childTemplates', function () {
     })
   })
 
-  it('should be able to pass data params to child', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should be able to pass data params to child', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{:foo}}',
       engine: 'jsrender',
       recipe: 'html',
@@ -118,13 +113,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('xx')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it('should be able to pass data nested params to child', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should be able to pass data nested params to child', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{:foo.a}}',
       engine: 'jsrender',
       recipe: 'html',
@@ -137,13 +131,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('xx')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it.skip('should be able to pass stringified object as params', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it.skip('should be able to pass stringified object as params', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{:foo.a}}',
       engine: 'jsrender',
       recipe: 'html',
@@ -158,13 +151,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('hello')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it('should merge in params, not override', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should merge in params, not override', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: '{{:main}}{{:foo}}',
       engine: 'jsrender',
       recipe: 'html',
@@ -178,13 +170,12 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('mainxx')
-        done()
       })
-    }).catch(done)
+    })
   })
 
-  it('should be able to override template properties with params', function (done) {
-    reporter.documentStore.collection('templates').insert({
+  it('should be able to override template properties with params', function () {
+    return reporter.documentStore.collection('templates').insert({
       content: 'aaa',
       engine: 'jsrender',
       recipe: 'html',
@@ -197,9 +188,8 @@ describe('childTemplates', function () {
 
       return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
         request.template.content.should.be.eql('xx')
-        done()
       })
-    }).catch(done)
+    })
   })
 
   it('should clone input data passed to child request', function () {
