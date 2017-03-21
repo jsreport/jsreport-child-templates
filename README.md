@@ -4,12 +4,12 @@
 
 > jsreport extension adding support to combine one template from multiple sub templates
 
-See http://jsreport.net/learn/child-templates
+See https://jsreport.net/learn/child-templates
 
-##Installation
+## Installation
 > npm install jsreport-child-templates
 
-##jsreport-core
+## jsreport-core
 You can apply this extension also manually to [jsreport-core](https://github.com/jsreport/jsreport-core)
 
 ```js
