@@ -24,9 +24,9 @@
   ],
   "license": "LGPL",
   "dependencies": {
-    "async-replace": "1.0.0",
-    "bluebird": "3.4.7",
-    "node.extend": "1.1.5"
+    "async-replace": "1.0.1",
+    "bluebird": "3.5.0",
+    "node.extend": "1.1.6"
   },
   "author": "Jan Blaha",
   "devDependencies": {
