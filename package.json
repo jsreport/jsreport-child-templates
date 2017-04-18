@@ -1,6 +1,6 @@
 {
   "name": "jsreport-child-templates",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "jsreport extension adding support to combine one template from multiple sub templates",
   "scripts": {
     "test": "mocha test --timeout 5000 && standard",
