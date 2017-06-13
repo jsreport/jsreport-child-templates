@@ -174,6 +174,25 @@ describe('childTemplates', function () {
     })
   })
 
+  it('should work with multiple data params', function () {
+    return reporter.documentStore.collection('templates').insert({
+      content: '{{:a}}{{:b}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    }).then(function (t) {
+      var request = {
+        template: {content: '{#child t1 @data.a=A @data.b=B}'},
+        data: {},
+        options: {}
+      }
+
+      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
+        request.template.content.should.be.eql('AB')
+      })
+    })
+  })
+
   it('should be able to override template properties with params', function () {
     return reporter.documentStore.collection('templates').insert({
       content: 'aaa',
