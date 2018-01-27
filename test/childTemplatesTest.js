@@ -94,7 +94,7 @@ describe('childTemplates', function () {
         })
       })
     }).catch(function (e) {
-      e.weak.should.be.ok
+      e.weak.should.be.ok()
       done()
     })
   })
