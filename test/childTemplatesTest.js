@@ -20,14 +20,13 @@ describe('childTemplates', () => {
       recipe: 'html',
       name: 't1'
     })
+
     const request = {
-      template: {content: '{#child t1}'},
-      options: {},
-      context: {}
+      template: {content: '{#child t1}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('xx')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('xx')
   })
 
   it('should handle multiple templates in one', async () => {
@@ -39,13 +38,11 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: 'a{#child t1}ba{#child t1}'},
-      options: {},
-      context: {}
+      template: {content: 'a{#child t1}ba{#child t1}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('afoobafoo')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('afoobafoo')
   })
 
   it('should handle multiple templates in nested one', async () => {
@@ -64,13 +61,11 @@ describe('childTemplates', () => {
       name: 't2'
     })
     const request = {
-      template: {content: '{#child t2}'},
-      options: {},
-      context: {}
+      template: {content: '{#child t2}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('foofoo')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('foofoo')
   })
 
   it('should throw when there is circle in templates', async () => {
@@ -99,13 +94,11 @@ describe('childTemplates', () => {
     })
 
     const request = {
-      template: {content: '{#child t1 @data.foo=xx}'},
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('xx')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('xx')
   })
 
   it('should be able to pass data nested params to child', async () => {
@@ -116,13 +109,11 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.foo.a=xx}'},
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @data.foo.a=xx}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('xx')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('xx')
   })
 
   it.skip('should be able to pass stringified object as params', function () {
@@ -154,14 +145,12 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.foo=xx}'},
-      data: { main: 'main' },
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html'},
+      data: { main: 'main' }
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('mainxx')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('mainxx')
   })
 
   it('should work with multiple data params', async () => {
@@ -172,14 +161,11 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.a=A @data.b=B}'},
-      data: {},
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @data.a=A @data.b=B}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('AB')
+    const res = await await reporter.render(request)
+    res.content.toString().should.be.eql('AB')
   })
 
   it('should be able to override template properties with params', async () => {
@@ -190,13 +176,11 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @template.content=xx}'},
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @template.content=xx}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('xx')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('xx')
   })
 
   it('should clone input data passed to child request', async () => {
@@ -207,13 +191,24 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.a=1}{#child t1 @data.a=2}'},
-      data: {},
-      options: {},
-      context: {}
+      template: {content: '{#child t1 @data.a=1}{#child t1 @data.a=2}', engine: 'none', recipe: 'html'}
     }
 
-    await reporter.childTemplates.evaluateChildTemplates(request, {}, true)
-    request.template.content.should.be.eql('12')
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('12')
+  })
+
+  it('should collect logs from child template to the parent', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      content: '{{:~a()}}',
+      helpers: `function a() { console.log('hello'); }`,
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    })
+    const request = { template: { content: '{#child t1}', engine: 'none', recipe: 'html' } }
+
+    const res = await reporter.render(request)
+    res.meta.logs.map(l => l.message).should.containEql('hello')
   })
 })
