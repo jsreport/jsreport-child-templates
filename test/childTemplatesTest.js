@@ -1,11 +1,12 @@
 require('should')
 const jsreport = require('jsreport-core')
+const helpers = require('../static/helpers')
 
 describe('childTemplates', () => {
   let reporter
 
   beforeEach(() => {
-    reporter = jsreport({ tasks: { strategy: 'in-process' } })
+    reporter = jsreport({ templatingEngines: { strategy: 'in-process' } })
     reporter.use(require('../')())
     reporter.use(require('jsreport-templates')())
     reporter.use(require('jsreport-jsrender')())
@@ -22,7 +23,7 @@ describe('childTemplates', () => {
     })
 
     const request = {
-      template: {content: '{#child t1}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
@@ -38,7 +39,7 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: 'a{#child t1}ba{#child t1}', engine: 'none', recipe: 'html'}
+      template: { content: 'a{#child t1}ba{#child t1}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
@@ -61,7 +62,7 @@ describe('childTemplates', () => {
       name: 't2'
     })
     const request = {
-      template: {content: '{#child t2}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t2}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
@@ -82,7 +83,7 @@ describe('childTemplates', () => {
       name: 't2'
     })
 
-    return reporter.render({template: {name: 't1'}}).should.be.rejected()
+    return reporter.render({ template: { name: 't1' } }).should.be.rejected()
   })
 
   it('should be able to pass data params to child', async () => {
@@ -94,7 +95,7 @@ describe('childTemplates', () => {
     })
 
     const request = {
-      template: {content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
@@ -109,32 +110,81 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.foo.a=xx}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1 @data.foo.a=xx}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
     res.content.toString().should.be.eql('xx')
   })
 
-  it.skip('should be able to pass stringified object as params', function () {
-    return reporter.documentStore.collection('templates').insert({
+  it('should be able to pass stringified object as params', async () => {
+    await reporter.documentStore.collection('templates').insert({
       content: '{{:foo.a}}',
       engine: 'jsrender',
       recipe: 'html',
       name: 't1'
-    }).then(function (t) {
-      var request = {
-        template: {
-          content: '{#child t1 @data={foo: {"a": "hello"}}}'
-        },
-        options: {},
-        context: {}
-      }
-
-      return reporter.childTemplates.evaluateChildTemplates(request, {}, true).then(function () {
-        request.template.content.should.be.eql('hello')
-      })
     })
+
+    const request = {
+      template: {
+        content: `{#child t1 @data$=${helpers.childTemplateSerializeData({ foo: { a: 'hello' } })}}`,
+        engine: 'jsrender',
+        recipe: 'html'
+      },
+      options: {}
+    }
+
+    const res = await reporter.render(request)
+
+    res.content.toString().should.be.eql('hello')
+  })
+
+  it('should be able to pass stringified object as params using helper', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      content: '{{:foo.a}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    })
+
+    const request = {
+      data: {
+        foo: {
+          a: 'hello'
+        }
+      },
+      template: {
+        content: `{#child t1 @data.foo$={{:~childTemplateSerializeData(foo)}}}`,
+        engine: 'jsrender',
+        recipe: 'html'
+      },
+      options: {}
+    }
+
+    const res = await reporter.render(request)
+
+    res.content.toString().should.be.eql('hello')
+  })
+
+  it('should be able to use normal and stringified object params', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      content: '{{:foo}}',
+      engine: 'jsrender',
+      recipe: 'html',
+      name: 't1'
+    })
+
+    const request = {
+      template: {
+        content: `a{#child t1 @data.foo=demo}ba{#child t1 @data$=${helpers.childTemplateSerializeData({ foo: 'demo2' })}}ba{#child t1 @data$=${helpers.childTemplateSerializeData({ foo: 'demo' })} @data.foo=demo3}`,
+        engine: 'none',
+        recipe: 'html'
+      }
+    }
+
+    const res = await reporter.render(request)
+
+    res.content.toString().should.be.eql('ademobademo2bademo3')
   })
 
   it('should merge in params, not override', async () => {
@@ -145,7 +195,7 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html'},
+      template: { content: '{#child t1 @data.foo=xx}', engine: 'none', recipe: 'html' },
       data: { main: 'main' }
     }
 
@@ -161,7 +211,7 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.a=A @data.b=B}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1 @data.a=A @data.b=B}', engine: 'none', recipe: 'html' }
     }
 
     const res = await await reporter.render(request)
@@ -176,7 +226,7 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @template.content=xx}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1 @template.content=xx}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
@@ -191,7 +241,7 @@ describe('childTemplates', () => {
       name: 't1'
     })
     const request = {
-      template: {content: '{#child t1 @data.a=1}{#child t1 @data.a=2}', engine: 'none', recipe: 'html'}
+      template: { content: '{#child t1 @data.a=1}{#child t1 @data.a=2}', engine: 'none', recipe: 'html' }
     }
 
     const res = await reporter.render(request)
