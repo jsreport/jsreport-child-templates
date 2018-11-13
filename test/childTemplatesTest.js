@@ -261,4 +261,70 @@ describe('childTemplates', () => {
     const res = await reporter.render(request)
     res.meta.logs.map(l => l.message).should.containEql('hello')
   })
+
+  it('should resolve template name from folders absolute path', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 't1'
+    })
+
+    const res = await reporter.render({
+      template: { content: '{#child folder/template}', engine: 'none', recipe: 'html' }
+    })
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name from folders relative path', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('folders').insert({
+      name: 'shared',
+      shortid: 'shared'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: '{#child ../shared/test}',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'test',
+      folder: {
+        shortid: 'shared'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { name: 'template' }
+    })
+    res.content.toString().should.be.eql('xx')
+  })
 })
