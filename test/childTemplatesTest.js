@@ -417,35 +417,6 @@ describe('childTemplates', () => {
     res.content.toString().should.be.eql('foo')
   })
 
-  it('should resolve template specified using absolute path with trailing slash', async () => {
-    await reporter.documentStore.collection('folders').insert({
-      name: 'folder',
-      shortid: 'folder'
-    })
-
-    await reporter.documentStore.collection('templates').insert({
-      content: 'xx',
-      engine: 'none',
-      recipe: 'html',
-      name: 'template',
-      folder: {
-        shortid: 'folder'
-      }
-    })
-
-    await reporter.documentStore.collection('templates').insert({
-      content: '{#child /folder/template/}',
-      engine: 'none',
-      recipe: 'html',
-      name: 't1'
-    })
-
-    const res = await reporter.render({
-      template: { name: 't1', engine: 'none', recipe: 'html' }
-    })
-    res.content.toString().should.be.eql('xx')
-  })
-
   it('should prefer resolving to template that is in same folder level of rendered template', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
