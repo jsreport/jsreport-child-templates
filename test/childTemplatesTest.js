@@ -262,7 +262,49 @@ describe('childTemplates', () => {
     res.meta.logs.map(l => l.message).should.containEql('hello')
   })
 
-  it('should resolve template name from folders absolute path', async () => {
+  it('should throw error when duplicated results are found', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder2',
+      shortid: 'folder2'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html',
+      folder: { shortid: 'folder2' }
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      engine: 'none',
+      content: '{#child xxx}',
+      recipe: 'html'
+    })
+    try {
+      await reporter.render({
+        template: {
+          name: 't1'
+        }
+      })
+
+      throw new Error('should have failed when duplicates are found')
+    } catch (e) {
+      e.message.includes('Duplicated templates').should.be.true()
+    }
+  })
+
+  it('should resolve template name using folders absolute path', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
       shortid: 'folder'
@@ -279,19 +321,196 @@ describe('childTemplates', () => {
     })
 
     await reporter.documentStore.collection('templates').insert({
-      content: 'xx',
+      content: '{#child /folder/template}',
       engine: 'none',
       recipe: 'html',
       name: 't1'
     })
 
     const res = await reporter.render({
-      template: { content: '{#child folder/template}', engine: 'none', recipe: 'html' }
+      template: { name: 't1', engine: 'none', recipe: 'html' }
     })
     res.content.toString().should.be.eql('xx')
   })
 
-  it('should resolve template name from folders relative path', async () => {
+  it('should resolve template at specifed path when there are others with same name', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo-root',
+      recipe: 'html'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      engine: 'none',
+      content: '{#child /xxx}',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+    const res = await reporter.render({
+      template: {
+        name: 't1'
+      }
+    })
+
+    res.content.toString().should.be.eql('foo-root')
+  })
+
+  it('should resolve template just by name no matter its location if there is no other template with same name', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      engine: 'none',
+      content: '{#child xxx}',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+    const res = await reporter.render({
+      template: {
+        name: 't1'
+      }
+    })
+
+    res.content.toString().should.be.eql('foo')
+  })
+
+  it('should resolve template just by name no matter its location if there is no other template with same name (from anonymous template)', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+    const res = await reporter.render({
+      template: {
+        content: '{#child xxx}',
+        engine: 'none',
+        recipe: 'html'
+      }
+    })
+
+    res.content.toString().should.be.eql('foo')
+  })
+
+  it('should resolve template specified using absolute path with trailing slash', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: '{#child /folder/template/}',
+      engine: 'none',
+      recipe: 'html',
+      name: 't1'
+    })
+
+    const res = await reporter.render({
+      template: { name: 't1', engine: 'none', recipe: 'html' }
+    })
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should prefer resolving to template that is in same folder level of rendered template', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      content: 't1',
+      engine: 'none',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      content: 't1-root',
+      engine: 'none',
+      recipe: 'html'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 't2',
+      content: '{#child t1}',
+      engine: 'none',
+      recipe: 'html',
+      folder: { shortid: 'folder' }
+    })
+
+    const res = await reporter.render({
+      template: { name: '/folder/t2', engine: 'none', recipe: 'html' }
+    })
+    res.content.toString().should.be.eql('t1')
+  })
+
+  it('should resolve template name using folders absolute path from nested template', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: '{#child /template}',
+      engine: 'none',
+      recipe: 'html',
+      name: 't1',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { name: '/folder/t1', engine: 'none', recipe: 'html' }
+    })
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it(`should resolve template name using folders relative path (../template syntax)`, async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
       shortid: 'folder'
@@ -326,5 +545,96 @@ describe('childTemplates', () => {
       template: { name: 'template' }
     })
     res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name using folders relative path (nested/template syntax)', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder2',
+      shortid: 'folder2',
+      folder: { shortid: 'folder' }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child folder2/test}',
+      engine: 'none',
+      recipe: 'html',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'test',
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      folder: {
+        shortid: 'folder2'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { name: 'template' }
+    })
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name using folders relative path (nested/template syntax) from anonymous template', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { content: '{#child folder/template}', engine: 'none', recipe: 'html' }
+    })
+
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should throw error when using invalid paths', async () => {
+    try {
+      await reporter.render({
+        template: {
+          content: '{#child /}',
+          engine: 'none',
+          recipe: 'html'
+        }
+      })
+
+      throw new Error('should have failed when passing invalid path')
+    } catch (e) {
+      e.message.includes('Invalid template path').should.be.true()
+    }
+
+    try {
+      await reporter.render({
+        template: {
+          content: '{#child ///}',
+          engine: 'none',
+          recipe: 'html'
+        }
+      })
+
+      throw new Error('should have failed when passing invalid path')
+    } catch (e) {
+      e.message.includes('Invalid template path').should.be.true()
+    }
   })
 })
