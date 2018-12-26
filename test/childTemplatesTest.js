@@ -481,7 +481,7 @@ describe('childTemplates', () => {
     res.content.toString().should.be.eql('xx')
   })
 
-  it(`should resolve template name using folders relative path (../template syntax)`, async () => {
+  it('should resolve template name using folders relative path (../template syntax)', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
       shortid: 'folder'
@@ -515,6 +515,68 @@ describe('childTemplates', () => {
     const res = await reporter.render({
       template: { name: 'template' }
     })
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name using folders relative path (./nested/template syntax)', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder2',
+      shortid: 'folder2',
+      folder: { shortid: 'folder' }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child ./folder2/test}',
+      engine: 'none',
+      recipe: 'html',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'test',
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      folder: {
+        shortid: 'folder2'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { name: 'template' }
+    })
+
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name using folders relative path (./nested/template syntax) from anonymous template', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder',
+      shortid: 'folder'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html',
+      name: 'template',
+      folder: {
+        shortid: 'folder'
+      }
+    })
+
+    const res = await reporter.render({
+      template: { content: '{#child ./folder/template}', engine: 'none', recipe: 'html' }
+    })
+
     res.content.toString().should.be.eql('xx')
   })
 
