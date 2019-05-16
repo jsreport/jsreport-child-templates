@@ -24,14 +24,14 @@
   ],
   "license": "LGPL",
   "dependencies": {
-    "async-replace": "1.0.1",
-    "bluebird": "3.5.3",
+    "async-replace-with-limit": "1.1.0",
+    "bluebird": "3.5.4",
     "node.extend.without.arrays": "1.1.6"
   },
   "author": "Jan Blaha",
   "devDependencies": {
     "eslint": "5.5.0",
-    "jsreport-core": "2.4.0",
+    "jsreport-core": "2.4.3",
     "jsreport-jsrender": "2.0.0",
     "jsreport-templates": "2.2.0",
     "mocha": "5.2.0",
