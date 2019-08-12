@@ -32,6 +32,7 @@
   "devDependencies": {
     "eslint": "5.5.0",
     "jsreport-core": "2.5.0",
+    "jsreport-handlebars": "github:jsreport/jsreport-handlebars",
     "jsreport-jsrender": "2.0.0",
     "jsreport-templates": "2.2.0",
     "mocha": "5.2.0",

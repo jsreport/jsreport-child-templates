@@ -10,6 +10,7 @@ describe('childTemplates', () => {
     reporter.use(require('../')())
     reporter.use(require('jsreport-templates')())
     reporter.use(require('jsreport-jsrender')())
+    reporter.use(require('jsreport-handlebars')())
 
     return reporter.init()
   })
@@ -669,5 +670,21 @@ describe('childTemplates', () => {
     } catch (e) {
       e.message.includes('Invalid template path').should.be.true()
     }
+  })
+
+  it('handlebars should be able to call another helper to calculate child template input data', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      content: '{{a}}',
+      engine: 'handlebars',
+      recipe: 'html',
+      name: 't1'
+    })
+
+    const request = {
+      template: { content: '{#child t1 @data.a={{aHelper}}}', engine: 'handlebars', recipe: 'html', helpers: `function aHelper() { return 'foo'}` }
+    }
+
+    const res = await reporter.render(request)
+    res.content.toString().should.be.eql('foo')
   })
 })
