@@ -31,10 +31,11 @@
   "author": "Jan Blaha",
   "devDependencies": {
     "eslint": "5.5.0",
-    "jsreport-core": "2.5.0",
-    "jsreport-handlebars": "github:jsreport/jsreport-handlebars",
-    "jsreport-jsrender": "2.0.0",
-    "jsreport-templates": "github:jsreport/jsreport-templates",
+    "handlebars": "4.1.2",
+    "jsreport-core": "2.6.1",
+    "jsreport-handlebars": "2.1.0",
+    "jsreport-jsrender": "2.1.0",
+    "jsreport-templates": "2.3.0",
     "mocha": "5.2.0",
     "should": "13.2.3",
     "standard": "12.0.1"
