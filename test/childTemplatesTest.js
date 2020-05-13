@@ -368,7 +368,7 @@ describe('childTemplates', () => {
     res.content.toString().should.be.eql('foo-root')
   })
 
-  it('should resolve template just by name no matter its location if there is no other template with same name', async () => {
+  it('should resolve template just by name no matter its location if there is no other template with same name (template at folder and child at root)', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
       shortid: 'folder'
@@ -395,17 +395,71 @@ describe('childTemplates', () => {
     res.content.toString().should.be.eql('foo')
   })
 
-  it('should resolve template just by name no matter its location if there is no other template with same name (from anonymous template)', async () => {
+  it('should resolve template just by name no matter its location if there is no other template with same name (anonymous template and child at root)', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html'
+    })
+    const res = await reporter.render({
+      template: {
+        content: '{#child xxx}',
+        engine: 'none',
+        recipe: 'html'
+      }
+    })
+
+    res.content.toString().should.be.eql('foo')
+  })
+
+  it('should resolve template just by name no matter its location if there is no other template with same name (template at folder and child at another folder)', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
       shortid: 'folder'
+    })
+    await reporter.documentStore.collection('folders').insert({
+      name: 'childTemplates',
+      shortid: 'childTemplates'
     })
     await reporter.documentStore.collection('templates').insert({
       name: 'xxx',
       engine: 'none',
       content: 'foo',
       recipe: 'html',
+      folder: {
+        shortid: 'childTemplates'
+      }
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 't1',
+      engine: 'none',
+      content: '{#child xxx}',
+      recipe: 'html',
       folder: { shortid: 'folder' }
+    })
+    const res = await reporter.render({
+      template: {
+        name: 't1'
+      }
+    })
+
+    res.content.toString().should.be.eql('foo')
+  })
+
+  it('should resolve template just by name no matter its location if there is no other template with same name (anonymous template and asset at folder)', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'folder1',
+      shortid: 'folder1'
+    })
+    await reporter.documentStore.collection('templates').insert({
+      name: 'xxx',
+      engine: 'none',
+      content: 'foo',
+      recipe: 'html',
+      folder: {
+        shortid: 'folder1'
+      }
     })
     const res = await reporter.render({
       template: {
@@ -640,6 +694,137 @@ describe('childTemplates', () => {
     })
 
     res.content.toString().should.be.eql('xx')
+  })
+
+  it('should not resolve template using folders absolute path (/foo) when child is nested', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'childTemplates',
+      shortid: 'childTemplates'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'foo',
+      content: 'foo',
+      recipe: 'html',
+      engine: 'none',
+      folder: {
+        shortid: 'childTemplates'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child /foo}',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    const res = await reporter.render({
+      template: {
+        name: 'template'
+      }
+    })
+
+    res.content.toString().should.be.eql('')
+  })
+
+  it('should not resolve template using folders relative path (childTemplates/foo) when there is no parent folder from template', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child childTemplates/foo}',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'foo',
+      content: 'foo',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    const res = await reporter.render({
+      template: {
+        name: 'template'
+      }
+    })
+
+    res.content.toString().should.be.eql('')
+  })
+
+  it('should not resolve asset using folders relative path (childTemplates/nested/folder/foo) when there is no parent folder from template', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child childTemplates/nested/folder/foo}',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'foo',
+      content: 'foo',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    const res = await reporter.render({
+      template: {
+        name: 'template'
+      }
+    })
+
+    res.content.toString().should.be.eql('')
+  })
+
+  it('should not resolve asset using folders relative path (childTemplates/foo) when there is no parent folder from nested template', async () => {
+    await reporter.documentStore.collection('folders').insert({
+      name: 'templates',
+      shortid: 'templates'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child childTemplates/foo}',
+      recipe: 'html',
+      engine: 'none',
+      folder: {
+        shortid: 'templates'
+      }
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'foo',
+      content: 'foo',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    const res = await reporter.render({
+      template: {
+        name: '/templates/template'
+      }
+    })
+
+    res.content.toString().should.be.eql('')
+  })
+
+  it('should not resolve asset using folders relative path (childTemplates/foo) when there is no parent folder from anonymous template', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'foo',
+      content: 'foo',
+      recipe: 'html',
+      engine: 'none'
+    })
+
+    const res = await reporter.render({
+      template: {
+        content: '{#child childTemplates/foo}',
+        recipe: 'html',
+        engine: 'none'
+      }
+    })
+
+    res.content.toString().should.be.eql('')
   })
 
   it('should throw error when using invalid paths', async () => {
