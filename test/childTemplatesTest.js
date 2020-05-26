@@ -573,6 +573,47 @@ describe('childTemplates', () => {
     res.content.toString().should.be.eql('xx')
   })
 
+  it('should resolve template name using folders relative path (./template syntax, parent template at root, child template at root)', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'template',
+      content: '{#child ./test}',
+      engine: 'none',
+      recipe: 'html'
+    })
+
+    await reporter.documentStore.collection('templates').insert({
+      name: 'test',
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html'
+    })
+
+    const res = await reporter.render({
+      template: { name: 'template' }
+    })
+
+    res.content.toString().should.be.eql('xx')
+  })
+
+  it('should resolve template name using folders relative path (./template syntax, anonymous template, child template at root)', async () => {
+    await reporter.documentStore.collection('templates').insert({
+      name: 'test',
+      content: 'xx',
+      engine: 'none',
+      recipe: 'html'
+    })
+
+    const res = await reporter.render({
+      template: {
+        content: '{#child ./test}',
+        engine: 'none',
+        recipe: 'html'
+      }
+    })
+
+    res.content.toString().should.be.eql('xx')
+  })
+
   it('should resolve template name using folders relative path (./nested/template syntax)', async () => {
     await reporter.documentStore.collection('folders').insert({
       name: 'folder',
