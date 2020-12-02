@@ -32,7 +32,7 @@
   "devDependencies": {
     "eslint": "5.5.0",
     "handlebars": "4.7.6",
-    "jsreport-core": "github:jsreport/jsreport-core",
+    "jsreport-core": "2.10.1",
     "jsreport-handlebars": "2.1.0",
     "jsreport-jsrender": "2.1.1",
     "jsreport-templates": "2.3.3",
