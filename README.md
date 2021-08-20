@@ -1,3 +1,6 @@
+**⚠️ This repository has been moved to the monorepo [jsreport/jsreport](https://github.com/jsreport/jsreport)**
+--
+
 # jsreport-child-templates
 [![NPM Version](http://img.shields.io/npm/v/jsreport-child-templates.svg?style=flat-square)](https://npmjs.com/package/jsreport-child-templates)
 [![Build Status](https://travis-ci.org/jsreport/jsreport-child-templates.png?branch=master)](https://travis-ci.org/jsreport/jsreport-child-templates)
